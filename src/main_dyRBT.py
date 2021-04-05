@@ -363,6 +363,50 @@ def run_test(args):
         )
     )
 
+
+
+def run_test2(args):
+
+    model = dy.ParameterCollection()
+    # [parser] = dy.load(args.model_path_base, model)
+    [parser] = dy.load("models/chartdyRBTC-model_addr_dytree_giga_0.4_200_1_chartdyRBTC_dytree_1_houseno_0_0_dev=0.90", model)
+    
+    test_chunk_insts = util.read_chunks(args.test_path, args.normal)
+
+    # ftreelog = open(args.expname + '.test.predtree.txt', 'w', encoding='utf-8')
+    ftreelog = open('aaa' + '.test.predtree.txt', 'w', encoding='utf-8')
+    test_predicted = []
+    test_start_time = time.time()
+    test_predicted = []
+    test_gold = []
+    for inst in test_chunk_insts:
+        chunks = util.inst2chunks(inst)
+        test_gold.append(chunks)
+
+    for x, chunks in test_chunk_insts:
+        dy.renew_cg()
+        sentence = [(parse.XX, ch) for ch in x]
+        predicted, _ = parser.parse(sentence)
+        pred_tree = predicted.convert()
+        ftreelog.write(pred_tree.linearize() + '\n')
+        test_predicted.append(pred_tree.to_chunks())
+    
+    ftreelog.close();
+            
+    # test_fscore = evaluate.eval_chunks2(args.evalb_dir, test_gold, test_predicted, output_filename=args.expname + '.test.txt')  # evalb
+    test_fscore = evaluate.eval_chunks2(args.evalb_dir, test_gold, test_predicted, output_filename='aaaabbbb' + '.test.txt')  # evalb
+
+    print(
+        "test-fscore {} "
+        "test-elapsed {} ".format(
+            test_fscore,
+            format_elapsed(test_start_time),
+            )
+        )
+
+
+
+
 def main():
     dynet_args = [
         "--dynet-mem",
@@ -416,7 +460,7 @@ def main():
 
 
     subparser = subparsers.add_parser("test")
-    subparser.set_defaults(callback=run_test)
+    subparser.set_defaults(callback=run_test2)
     for arg in dynet_args:
         subparser.add_argument(arg)
     subparser.add_argument("--model-path-base", required=True)
@@ -425,6 +469,7 @@ def main():
     subparser.add_argument("--test-path", default="data/test.txt")
     subparser.add_argument("--expname", default="default")
     subparser.add_argument("--normal", type=int, default=1)
+    subparser.add_argument("--RBTlabel", type=str, default="city")
 
 
     args = parser.parse_args()
